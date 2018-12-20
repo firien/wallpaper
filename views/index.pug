@@ -1,0 +1,31 @@
+doctype html
+html(lang="en")
+  head
+    title=name()
+    meta(charset="UTF-8")
+    meta(name="Description" content=desc())
+    meta(name="theme-color" content=theme())
+    meta(name="apple-mobile-web-app-capable" content="yes")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    // scripts
+    script&attributes(scriptAttributes('bundle.js'))
+    script&attributes(scriptAttributes('pwa.js'))
+    script&attributes(scriptAttributes('index.js'))
+    // css
+    link(rel='stylesheet' href=assetPath('index.css'))
+    // icons
+    //link(rel="icon" href="favicon.ico" type="image/x-icon")
+    //each icon in iconLinks()
+    //  link(rel=icon.rel sizes=icon.sizes href=icon.href)
+    // pwa
+    link(rel="manifest", href="manifest.webmanifest")
+  body
+    div.flex
+      div#palette
+        select
+          option(value='iPhoneSE') iPhoneSE
+        #iphone
+        input#background-color(type='color')
+      div#images
+        h2.center Drag & Drop Images here
+        div#gallery

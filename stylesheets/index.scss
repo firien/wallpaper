@@ -1,0 +1,93 @@
+body {
+  margin: 0;
+  height: 100vh;
+  overflow-y: hidden;
+}
+.flex {
+  display: flex;
+}
+.flex > * {
+  margin: 0;
+  flex: 1 50%;
+  height: 100vh;
+  padding: 1em;
+  box-sizing: border-box;
+  font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';
+  font-size: 1em;
+  overflow-y: auto;
+}
+
+#palette {
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  &> * {
+    flex: 0 0 2em;
+  }
+  #iphone {
+    align-self: center;
+    flex: 1 0;
+    svg {
+      border: thin black solid;
+    }
+  }
+}
+
+h1, h2 {
+  border-bottom: thin solid #ddd;
+  padding-bottom: 0.25em;
+  padding-top: 0.25em;
+  font-weight: 600;
+}
+
+.center {
+  text-align: center;
+}
+
+// SVG
+.over {
+  fill: red;
+}
+
+
+.modal {
+  z-index: 100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  button {
+    position: absolute;
+    width: 5em;
+    left: calc(50% - 2.5em);
+    top: 80%;
+  }
+}
+.frame {
+  pointer-events: none;
+  stroke: black;
+  stroke-width: 2px;
+  fill: none;
+}
+button#installer {
+  background: url(../images/icon-180.4685c1b46790d3de3429.png) left no-repeat;
+  font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';
+  position: absolute;
+  background-color: navy;
+  top: 0;
+  right: 0;
+  margin: 1em;
+  border: thin solid white;
+  border-radius: 0.2em;
+  color: #fffff0;
+  font-size: 1.5em;
+  line-height: 1.5em;
+  height: 2em;
+  background-size: 2em 2em;
+  padding-left: 2.5em;
+  padding-right: 0.5em;
+  cursor: pointer;
+}

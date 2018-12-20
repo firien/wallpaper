@@ -1,0 +1,208 @@
+# index 
+$database = null
+open = (data) ->
+  request = indexedDB.open('wallpaper', 2)
+  request.onupgradeneeded = (e) ->
+    database = request.result
+    if not database.objectStoreNames.contains('images')
+      database.createObjectStore('images', keyPath: 'id', autoIncrement: true)
+    if not database.objectStoreNames.contains('icons')
+      database.createObjectStore('icons', keyPath: 'id', autoIncrement: true)
+  request.onsuccess = (e) ->
+    $database = request.result
+    self.postMessage(promiseId: data.promiseId, status: 201)
+
+saveFile = (data) ->
+  getOrientation(data.file).then((orientation) ->
+    angle = switch orientation
+      when 1 then 0
+      when 3 then Math.PI
+      when 6 then Math.PI / 2
+      when 8 then Math.PI / -2
+    # convert back to blob
+    blob = new Blob([data.file], type: data.type)
+    saveBlob = (blob) ->
+      trxn = $database.transaction(['images'], 'readwrite')
+      store = trxn.objectStore('images')
+      store.add(blob)
+      trxn.oncomplete = ->
+        self.postMessage(promiseId: data.promiseId, status: 201)
+    if angle != 0
+      rotateImage(blob, angle).then(saveBlob)
+    else
+      saveBlob(blob)
+  )
+
+loadImages = (data) ->
+  trxn = $database.transaction(['images'], 'readonly')
+  store = trxn.objectStore('images')
+  results = {}
+  req = store.openCursor()
+  req.onsuccess = (e) ->
+    cursor = req.result
+    if cursor?
+      results[cursor.key] = URL.createObjectURL(cursor.value)
+      cursor.continue()
+  trxn.oncomplete = ->
+    self.postMessage(promiseId: data.promiseId, images: results, status: 200)
+
+generateIcon = (data) ->
+  # getPoints = (str) ->
+  #   str.split(',').map((n) -> Number(n) + 60)
+  trxn = $database.transaction(['images'], 'readonly')
+  store = trxn.objectStore('images')
+  req = store.get(Number(data.id))
+  req.onsuccess = (e) ->
+    blob = req.result
+    canvas = new OffscreenCanvas(120,120)
+    ctx = canvas.getContext('2d')
+    ctx.beginPath()
+    # points = iconClipPoints()
+    # [startX, startY] = getPoints(points.shift())
+    # ctx.moveTo(startX, startY)
+    # for point in points
+    #   [x, y] = getPoints(point)
+    #   ctx.lineTo(x, y)
+    # ctx.clip()
+    createImageBitmap(blob).then((bitmap) ->
+      ctx.drawImage(bitmap, data.dx, data.dy, bitmap.width * data.scale, bitmap.height * data.scale)
+      canvas.convertToBlob(
+        type: 'image/jpeg',
+        quality: 0.95
+      ).then((blob) ->
+        saveIcon(blob, data.position).then( ->
+          self.postMessage(promiseId: data.promiseId, status: 200)
+        )
+      )
+    )
+
+saveIcon = (blob, position) ->
+  new Promise((resolve, reject) ->
+    trxn = $database.transaction(['icons'], 'readwrite')
+    store = trxn.objectStore('icons')
+    req = store.put(position: Number(position), icon: blob)
+    trxn.oncomplete = resolve
+    #TODO: errors
+  )
+
+loadIcons = (data) ->
+  trxn = $database.transaction(['icons'], 'readonly')
+  store = trxn.objectStore('icons')
+  results = {}
+  req = store.openCursor()
+  req.onsuccess = (e) ->
+    cursor = req.result
+    if cursor?
+      icon = cursor.value
+      results[icon.position] = URL.createObjectURL(icon.icon)
+      cursor.continue()
+  trxn.oncomplete = ->
+    self.postMessage(promiseId: data.promiseId, icons: results, status: 200)
+self.addEventListener('message', (e) ->
+  switch e.data.cmd
+    when 'open'          then open(e.data)
+    when 'saveFile'      then saveFile(e.data)
+    when 'loadImages'    then loadImages(e.data)
+    when 'loadIcons'     then loadIcons(e.data)
+    when 'generateIcon'  then generateIcon(e.data)
+)
+
+# https://stackoverflow.com/questions/7584794/
+getOrientation = (buffer) ->
+  new Promise((resolve, reject) ->
+    orientation = -1
+    view = new DataView(buffer)
+    if view.getUint16(0, false) != 0xFFD8
+      orientation = -2
+    else
+      length = view.byteLength
+      offset = 2
+      while offset < length
+        if view.getUint16(offset+2, false) <= 8
+          orientation = -1
+          break
+        else
+          marker = view.getUint16(offset, false)
+          offset += 2
+          if marker == 0xFFE1
+            if (view.getUint32(offset += 2, false) != 0x45786966)
+              orientation = -1
+              break
+            else
+              little = view.getUint16(offset += 6, false) == 0x4949
+              offset += view.getUint32(offset + 4, little)
+              tags = view.getUint16(offset, little)
+              offset += 2
+              for i in [0...tags]
+                if (view.getUint16(offset + (i * 12), little) == 0x0112)
+                  orientation = (view.getUint16(offset + (i * 12) + 8, little))
+                  break
+              if orientation > -1
+                break
+          else if (marker & 0xFF00) != 0xFF00
+            break
+          else
+            offset += view.getUint16(offset, false)
+    resolve(orientation)
+  )
+
+rotateImage = (blob, angle) ->
+  createImageBitmap(blob).then((bitmap) ->
+    if angle == Math.PI
+      w = bitmap.width
+      h = bitmap.height
+    else
+      w = bitmap.height
+      h = bitmap.width
+    canvas = new OffscreenCanvas(w, h)
+    ctx = canvas.getContext('2d')
+    ctx.setTransform(1, 0, 0, 1, w / 2, h / 2)
+    ctx.rotate(angle)
+    ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2)
+    canvas.convertToBlob(
+      type: 'image/jpeg',
+      quality: 0.95
+    )
+  )
+
+# generate squircle clip path
+iconClipPoints = ->
+  squircle = (x)->
+    (((1 - (Math.abs(x / 60) ** 5)) ** 0.2) * 60).toFixed(2)
+
+  points = []
+  x = 0
+  while x <= 25
+    points.push("#{x},#{squircle(x)}")
+    x = x + 1
+  while x <= 60
+    points.push("#{x.toFixed(2)},#{squircle(x)}")
+    x = x + 0.1
+
+  _points = []
+  x = 0
+  while x <= 25
+    _points.push("#{x},#{squircle(x) * -1.0}")
+    x = x + 1
+  while x <= 60
+    _points.push("#{x.toFixed(2)},#{squircle(x) * -1.0}")
+    x = x + 0.1
+  points = points.concat(_points.reverse())
+
+  x = 0
+  while x <= 25
+    points.push("-#{x},#{squircle(x) * -1.0}")
+    x = x + 1
+  while x <= 60
+    points.push("-#{x.toFixed(2)},#{squircle(x) * -1.0}")
+    x = x + 0.1
+
+  _points.length = 0
+  x = 0
+  while x <= 25
+    _points.push("-#{x},#{squircle(x)}")
+    x = x + 1
+  while x <= 60
+    _points.push("-#{x.toFixed(2)},#{squircle(x)}")
+    x = x + 0.1
+  points = points.concat(_points.reverse())
