@@ -1,4 +1,15 @@
-# index 
+iphone = {
+  width: 640
+  height: 1136
+  iconSize: 120
+  xOffset: 92
+  xGap: 32
+  yOffset: 114
+  yGap: 31
+  rows: 5
+}
+
+
 $database = null
 open = (data) ->
   request = indexedDB.open('wallpaper', 2)
@@ -46,9 +57,8 @@ loadImages = (data) ->
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, images: results, status: 200)
 
+# square 120x120 icon
 generateIcon = (data) ->
-  # getPoints = (str) ->
-  #   str.split(',').map((n) -> Number(n) + 60)
   trxn = $database.transaction(['images'], 'readonly')
   store = trxn.objectStore('images')
   req = store.get(Number(data.id))
@@ -56,14 +66,6 @@ generateIcon = (data) ->
     blob = req.result
     canvas = new OffscreenCanvas(120,120)
     ctx = canvas.getContext('2d')
-    ctx.beginPath()
-    # points = iconClipPoints()
-    # [startX, startY] = getPoints(points.shift())
-    # ctx.moveTo(startX, startY)
-    # for point in points
-    #   [x, y] = getPoints(point)
-    #   ctx.lineTo(x, y)
-    # ctx.clip()
     createImageBitmap(blob).then((bitmap) ->
       ctx.drawImage(bitmap, data.dx, data.dy, bitmap.width * data.scale, bitmap.height * data.scale)
       canvas.convertToBlob(
@@ -98,13 +100,54 @@ loadIcons = (data) ->
       cursor.continue()
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, icons: results, status: 200)
+
+generateWallpaper = (data) ->
+  width  = iphone.width
+  height = iphone.height
+  canvas = new OffscreenCanvas(width, height)
+  ctx = canvas.getContext('2d')
+  ctx.fillStyle = data.backgroundColor
+  ctx.fillRect(0, 0, width, height)
+  trxn = $database.transaction(['icons'], 'readonly')
+  store = trxn.objectStore('icons')
+  req = store.openCursor()
+  getPoints = (str) ->
+    str.split(',').map((n) -> Number(n) + 60)
+  req.onsuccess = (e) ->
+    cursor = req.result
+    if cursor?
+      icon = cursor.value
+      position = icon.position
+      # place on canvas
+      createImageBitmap(icon.icon).then((bitmap) ->
+        ctx.beginPath()
+        points = iconClipPoints()
+        [startX, startY] = getPoints(points.shift())
+        ctx.moveTo(startX, startY)
+        for point in points
+          [x, y] = getPoints(point)
+          ctx.lineTo(x+30, y+30)
+        ctx.clip()
+        ctx.drawImage(bitmap, 30, 30)
+      )
+      cursor.continue()
+  trxn.oncomplete = ->
+    canvas.convertToBlob(
+      type: 'image/jpeg',
+      quality: 0.95
+    ).then((blob) ->
+      url = URL.createObjectURL(blob)
+      self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+    )
+
 self.addEventListener('message', (e) ->
   switch e.data.cmd
-    when 'open'          then open(e.data)
-    when 'saveFile'      then saveFile(e.data)
-    when 'loadImages'    then loadImages(e.data)
-    when 'loadIcons'     then loadIcons(e.data)
-    when 'generateIcon'  then generateIcon(e.data)
+    when 'open'               then open(e.data)
+    when 'saveFile'           then saveFile(e.data)
+    when 'loadImages'         then loadImages(e.data)
+    when 'loadIcons'          then loadIcons(e.data)
+    when 'generateIcon'       then generateIcon(e.data)
+    when 'generateWallpaper'  then generateWallpaper(e.data)
 )
 
 # https://stackoverflow.com/questions/7584794/

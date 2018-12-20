@@ -22,9 +22,6 @@ fileDropHandler = (e) ->
     e.preventDefault()
     files = Array::slice.call(e.dataTransfer.files)
     Promise.all(files.map((file) ->
-      # getOrientation(file, (q) ->
-      #   console.log q
-      # )
       new Response(file).arrayBuffer().then((buffer) ->
         sendMessage(cmd: 'saveFile', file: buffer, type: file.type, [buffer])
       )
@@ -182,34 +179,6 @@ initTranslation = (e) ->
   window.addEventListener('pointermove', pointermove)
   window.addEventListener('pointerup', pointerup)
 
-testCrop = () ->
-  getPoints = (str) ->
-    str.split(',').map((n) -> Number(n) + 60)
-  # canvas = new OffscreenCanvas(120,120)
-  canvas = document.createElement('canvas')
-  canvas.setAttribute('width', 120)
-  canvas.setAttribute('height', 120)
-  document.body.appendChild(canvas)
-  
-  ctx = canvas.getContext('2d')
-  ctx.beginPath()
-  points = iconClipPoints()
-  [startX, startY] = getPoints(points.shift())
-  ctx.moveTo(startX, startY)
-  for point in points
-    [x, y] = getPoints(point)
-    ctx.lineTo(x, y)
-  ctx.clip()
-  img = document.querySelector('img')
-  ctx.drawImage(img, 0, 0)
-  # bitmapOne = canvas.transferToImageBitmap()
-  # can = document.createElement('canvas')
-  # can.setAttribute('width', 120)
-  # can.setAttribute('height', 120)
-  # document.body.appendChild(can)
-  # can.transferFromImageBitmap(bitmapOne)
-
-
 setBackground = (e) ->
   $palette.style.backgroundColor = this.value
   try
@@ -334,5 +303,13 @@ document.addEventListener('DOMContentLoaded', ->
     e.preventDefault()
   )
   generateIphone()
+  document.getElementById('make-wallpaper').addEventListener('click', ->
+    sendMessage(cmd: 'generateWallpaper', backgroundColor: backgroundColorPicker.value).then((response) ->
+      a = document.createElement('a')
+      a.href = response.url
+      a.download = 'we.jpeg'
+      a.click()
+    )
+  )
   opened.then(loadIcons)
 )
