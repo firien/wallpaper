@@ -2,9 +2,9 @@ iphone = {
   width: 640
   height: 1136
   iconSize: 120
-  xOffset: 92
+  xOffset: 32
   xGap: 32
-  yOffset: 114
+  yOffset: 54
   yGap: 31
   rows: 5
 }
@@ -30,6 +30,7 @@ saveFile = (data) ->
       when 3 then Math.PI
       when 6 then Math.PI / 2
       when 8 then Math.PI / -2
+      else 0
     # convert back to blob
     blob = new Blob([data.file], type: data.type)
     saveBlob = (blob) ->
@@ -102,6 +103,12 @@ loadIcons = (data) ->
     self.postMessage(promiseId: data.promiseId, icons: results, status: 200)
 
 generateWallpaper = (data) ->
+  getPosition = (pos) ->
+    row = Math.ceil(pos / 4)
+    col = pos % 4
+    if col == 0
+      col = 4
+    [row, col]
   width  = iphone.width
   height = iphone.height
   canvas = new OffscreenCanvas(width, height)
@@ -110,36 +117,40 @@ generateWallpaper = (data) ->
   ctx.fillRect(0, 0, width, height)
   trxn = $database.transaction(['icons'], 'readonly')
   store = trxn.objectStore('icons')
-  req = store.openCursor()
+  req = store.getAll()
   getPoints = (str) ->
     str.split(',').map((n) -> Number(n) + 60)
   req.onsuccess = (e) ->
-    cursor = req.result
-    if cursor?
-      icon = cursor.value
-      position = icon.position
-      # place on canvas
-      createImageBitmap(icon.icon).then((bitmap) ->
-        ctx.beginPath()
-        points = iconClipPoints()
-        [startX, startY] = getPoints(points.shift())
-        ctx.moveTo(startX, startY)
-        for point in points
-          [x, y] = getPoints(point)
-          ctx.lineTo(x+30, y+30)
-        ctx.clip()
-        ctx.drawImage(bitmap, 30, 30)
+    icons = req.result
+    icons.reduce((promise, icon) ->
+      promise.then( ->
+        createImageBitmap(icon.icon).then((bitmap) ->
+          [row, col] = getPosition(icon.position)
+          ctx.save()
+          ctx.beginPath()
+          points = iconClipPoints()
+          [startX, startY] = getPoints(points.shift())
+          ctx.moveTo(startX, startY)
+          xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
+          yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
+          for point in points
+            [x, y] = getPoints(point)
+            ctx.lineTo(x+xOffset, y+yOffset)
+          ctx.clip()
+          ctx.drawImage(bitmap, xOffset, yOffset)
+          ctx.restore()
+        )
       )
-      cursor.continue()
-  trxn.oncomplete = ->
-    canvas.convertToBlob(
-      type: 'image/jpeg',
-      quality: 0.95
-    ).then((blob) ->
-      url = URL.createObjectURL(blob)
-      self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+    , Promise.resolve()).then( ->
+      icons = null
+      canvas.convertToBlob(
+        type: 'image/jpeg',
+        quality: 0.95
+      ).then((blob) ->
+        url = URL.createObjectURL(blob)
+        self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+      )
     )
-
 self.addEventListener('message', (e) ->
   switch e.data.cmd
     when 'open'               then open(e.data)

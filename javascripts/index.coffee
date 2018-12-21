@@ -160,14 +160,21 @@ initScale = (e) ->
   this.transform.baseVal.appendItem(t)
 
 initTranslation = (e) ->
-  startX = e.clientX
-  startY = e.clientY
   image = this
   svg = image.parentNode
   ctm = image.getCTM()
+  startPoint = svg.createSVGPoint()
+  startPoint.x = e.clientX
+  startPoint.y = e.clientY
+  inverseMatrix = ctm.inverse()
+  startPoint = startPoint.matrixTransform(inverseMatrix)
   pointermove = (e) ->
-    deltaX = e.clientX - startX
-    deltaY = e.clientY - startY
+    currentPoint = svg.createSVGPoint()
+    currentPoint.x = e.clientX
+    currentPoint.y = e.clientY
+    currentPoint = currentPoint.matrixTransform(inverseMatrix)
+    deltaX = currentPoint.x - startPoint.x
+    deltaY = currentPoint.y - startPoint.y
     t = svg.createSVGTransformFromMatrix(
       ctm.translate(deltaX, deltaY)
     )
