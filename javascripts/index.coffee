@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', ->
     sendMessage(cmd: 'generateWallpaper', backgroundColor: backgroundColorPicker.value).then((response) ->
       a = document.createElement('a')
       a.href = response.url
-      a.download = 'we.jpeg'
+      a.download = 'wallpaper.jpeg'
       a.click()
     )
   )

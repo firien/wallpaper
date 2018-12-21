@@ -111,6 +111,8 @@ generateWallpaper = (data) ->
     [row, col]
   width  = iphone.width
   height = iphone.height
+  tmpCanvas = new OffscreenCanvas(120, 120)
+  tmpCtx = tmpCanvas.getContext('2d')
   canvas = new OffscreenCanvas(width, height)
   ctx = canvas.getContext('2d')
   ctx.fillStyle = data.backgroundColor
@@ -122,23 +124,28 @@ generateWallpaper = (data) ->
     str.split(',').map((n) -> Number(n) + 60)
   req.onsuccess = (e) ->
     icons = req.result
+    points = iconClipPoints()
+    [startX, startY] = getPoints(points.shift())
     icons.reduce((promise, icon) ->
       promise.then( ->
         createImageBitmap(icon.icon).then((bitmap) ->
-          [row, col] = getPosition(icon.position)
-          ctx.save()
-          ctx.beginPath()
-          points = iconClipPoints()
-          [startX, startY] = getPoints(points.shift())
-          ctx.moveTo(startX, startY)
-          xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
-          yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
+          #draw clipped icon to tmp canvas
+          tmpCtx.clearRect(0, 0, tmpCanvas.width, tmpCanvas.height)
+          tmpCtx.globalCompositeOperation = 'source-over'
+          tmpCtx.drawImage(bitmap, 0, 0)
+          tmpCtx.fillStyle = '#fff'
+          tmpCtx.globalCompositeOperation = 'destination-in'
+          tmpCtx.beginPath()
+          tmpCtx.moveTo(startX, startY)
           for point in points
             [x, y] = getPoints(point)
-            ctx.lineTo(x+xOffset, y+yOffset)
-          ctx.clip()
-          ctx.drawImage(bitmap, xOffset, yOffset)
-          ctx.restore()
+            tmpCtx.lineTo(x, y)
+          tmpCtx.closePath()
+          tmpCtx.fill()
+          [row, col] = getPosition(icon.position)
+          xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
+          yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
+          ctx.drawImage(tmpCanvas, xOffset, yOffset)
         )
       )
     , Promise.resolve()).then( ->
