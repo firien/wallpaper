@@ -5,7 +5,7 @@ iphone = {
   xOffset: 32
   xGap: 32
   yOffset: 54
-  yGap: 31
+  yGap: 56
   rows: 5
 }
 
@@ -220,6 +220,20 @@ rotateImage = (blob, angle) ->
     ctx.setTransform(1, 0, 0, 1, w / 2, h / 2)
     ctx.rotate(angle)
     ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2)
+    canvas.convertToBlob(
+      type: 'image/jpeg',
+      quality: 0.95
+    )
+  )
+
+generateThumbnail = (blob) ->
+  maxWidth = 100
+  createImageBitmap(blob).then((bitmap) ->
+    scale = maxWidth / bitmap.width
+    height = this.height * scale
+    canvas = new OffscreenCanvas(maxWidth, height)
+    ctx = canvas.getContext('2d')
+    ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0, maxWidth, height)
     canvas.convertToBlob(
       type: 'image/jpeg',
       quality: 0.95
