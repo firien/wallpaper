@@ -46,6 +46,10 @@ h1, h2 {
   text-align: center;
 }
 
+img:not([src]) {
+  background-color: grey;
+}
+
 // SVG
 .over {
   fill: red;

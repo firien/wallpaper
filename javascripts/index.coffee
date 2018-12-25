@@ -21,11 +21,20 @@ fileDropHandler = (e) ->
     e.stopPropagation()
     e.preventDefault()
     files = Array::slice.call(e.dataTransfer.files)
-    Promise.all(files.map((file) ->
+    container = document.getElementById('gallery')
+    files.forEach((file) ->
+      image = new Image()
+      image.setAttribute('width', 100)
+      image.setAttribute('height', 100)
+      container.appendChild(image)
       new Response(file).arrayBuffer().then((buffer) ->
-        sendMessage(cmd: 'saveFile', file: buffer, type: file.type, [buffer])
+        sendMessage(cmd: 'saveFile', file: buffer, type: file.type, [buffer]).then((response) ->
+          image.onload = ->
+            this.setAttribute('height', this.naturalHeight)
+          image.src = response.url
+        )
       )
-    )).then(loadImages)
+    )
 
 emptyElement = (element) ->
   while element.firstChild
@@ -60,33 +69,23 @@ loadImages = ->
     keys = Object.keys(e.images).map((n) -> Number(n)).sort((a,b) ->
       a - b
     )
-    maxWidth = 100
-    Promise.all(keys.map((key) ->
-      new Promise((resolve, reject) ->
-        url = e.images[key]
-        image = new Image()
-        image.setAttribute('data-id', key)
-        image.onload = ->
-          scale = maxWidth / this.width
-          this.setAttribute('draggable', 'true')
-          this.setAttribute('data-width', this.width)
-          this.setAttribute('data-height', this.height)
-          this.setAttribute('width', maxWidth)
-          this.setAttribute('height', this.height * scale)
-          resolve(this)
-        image.src = url
-      )
-    )).then((images) ->
-      for image in images
-        container.appendChild(image)
-        image.addEventListener('dragstart', iconImageDragStart)
-    )
+    for key in keys
+      url = e.images[key]
+      image = new Image()
+      image.setAttribute('width', 100)
+      image.setAttribute('data-id', key)
+      image.onload = ->
+        this.setAttribute('height', this.naturalHeight)
+        this.setAttribute('draggable', 'true')
+      image.src = url
+      container.appendChild(image)
+      image.addEventListener('dragstart', iconImageDragStart)
+      image
   )
 
 iconImageDragStart = (e) ->
   e.dataTransfer.setData('application/json', JSON.stringify({
     id: this.getAttribute('data-id')
-    src: this.src
   }))
   for el in document.querySelectorAll('.icon')
     el.addEventListener('dragover', (e) ->
@@ -101,7 +100,9 @@ iconImageDragStart = (e) ->
 iconImageDrop = (e) ->
   position = this.getAttribute('data-position')
   image = JSON.parse(e.dataTransfer.getData('application/json'))
-  positionImage(image, position)
+  sendMessage(cmd: 'getImage', id: image.id).then((response) ->
+    positionImage(response.image, position)
+  )
 
 positionImage = (image, position) ->
   div = document.createElement('div')
@@ -150,14 +151,16 @@ initScale = (e) ->
   svg = this.parentNode
   e.preventDefault()
   e.stopPropagation()
-  scale = 1 + ((e.wheelDelta || -e.detail) / 300)
-  scale = Math.max(0.1, Math.min(3, scale))
   ctm = this.getCTM()
-  t = svg.createSVGTransformFromMatrix(
-    ctm.scale(scale)
-  )
-  this.transform.baseVal.clear()
-  this.transform.baseVal.appendItem(t)
+  scale = 1 + ((e.wheelDelta || -e.detail) / 300)
+  scale = Math.max(0.1, Math.min(2, scale))
+  newScale = ctm.a * scale
+  if (newScale > .1) && (newScale < 2)
+    t = svg.createSVGTransformFromMatrix(
+      ctm.scale(scale)
+    )
+    this.transform.baseVal.clear()
+    this.transform.baseVal.appendItem(t)
 
 initTranslation = (e) ->
   image = this

@@ -24,6 +24,7 @@ open = (data) ->
     self.postMessage(promiseId: data.promiseId, status: 201)
 
 saveFile = (data) ->
+  # image may have meta rotation data
   getOrientation(data.file).then((orientation) ->
     angle = switch orientation
       when 1 then 0
@@ -34,16 +35,31 @@ saveFile = (data) ->
     # convert back to blob
     blob = new Blob([data.file], type: data.type)
     saveBlob = (blob) ->
-      trxn = $database.transaction(['images'], 'readwrite')
-      store = trxn.objectStore('images')
-      store.add(blob)
-      trxn.oncomplete = ->
-        self.postMessage(promiseId: data.promiseId, status: 201)
+      generateThumbnail(blob).then((thumbnail) ->
+        trxn = $database.transaction(['images'], 'readwrite')
+        store = trxn.objectStore('images')
+        store.add(
+          original:  blob
+          thumbnail: thumbnail
+        )
+        trxn.oncomplete = ->
+          url = URL.createObjectURL(thumbnail)
+          self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+      )
     if angle != 0
       rotateImage(blob, angle).then(saveBlob)
     else
       saveBlob(blob)
   )
+
+getImage = (data) ->
+  trxn = $database.transaction(['images'], 'readonly')
+  store = trxn.objectStore('images')
+  req = store.get(Number(data.id))
+  req.onsuccess = (e) ->
+    blob = req.result.original
+    url = URL.createObjectURL(blob)
+    self.postMessage(promiseId: data.promiseId, image: {id: data.id, src: url}, status: 200)
 
 loadImages = (data) ->
   trxn = $database.transaction(['images'], 'readonly')
@@ -53,7 +69,8 @@ loadImages = (data) ->
   req.onsuccess = (e) ->
     cursor = req.result
     if cursor?
-      results[cursor.key] = URL.createObjectURL(cursor.value)
+      image = cursor.value
+      results[cursor.key] = URL.createObjectURL(image.thumbnail)
       cursor.continue()
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, images: results, status: 200)
@@ -64,7 +81,7 @@ generateIcon = (data) ->
   store = trxn.objectStore('images')
   req = store.get(Number(data.id))
   req.onsuccess = (e) ->
-    blob = req.result
+    blob = req.result.original
     canvas = new OffscreenCanvas(120,120)
     ctx = canvas.getContext('2d')
     createImageBitmap(blob).then((bitmap) ->
@@ -163,6 +180,7 @@ self.addEventListener('message', (e) ->
     when 'open'               then open(e.data)
     when 'saveFile'           then saveFile(e.data)
     when 'loadImages'         then loadImages(e.data)
+    when 'getImage'           then getImage(e.data)
     when 'loadIcons'          then loadIcons(e.data)
     when 'generateIcon'       then generateIcon(e.data)
     when 'generateWallpaper'  then generateWallpaper(e.data)
@@ -230,7 +248,7 @@ generateThumbnail = (blob) ->
   maxWidth = 100
   createImageBitmap(blob).then((bitmap) ->
     scale = maxWidth / bitmap.width
-    height = this.height * scale
+    height = bitmap.height * scale
     canvas = new OffscreenCanvas(maxWidth, height)
     ctx = canvas.getContext('2d')
     ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0, maxWidth, height)
