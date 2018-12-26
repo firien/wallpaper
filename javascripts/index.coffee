@@ -45,12 +45,8 @@ loadIcons = ->
   sendMessage(cmd: 'loadIcons').then((e) ->
     for position, url of e.icons
       position = Number(position)
-      row = Math.ceil(position / 4)
-      col = position % 4
-      if col == 0
-        col = 4
-      g = document.querySelector("#iphone svg g#row-#{row} > g:nth-child(#{col})")
-      placeholder = g.querySelector('rect.icon')
+      placeholder = document.querySelector("#iphone svg g rect[data-position='#{position}']")
+      g = placeholder.parentElement
       placeholder?.removeEventListener('drop', iconImageDrop)
       emptyElement(g)
       img = createSVGElement('image')
@@ -208,44 +204,38 @@ setBackground = (e) ->
   catch e
     null
 
-iphone = {
-  width: 640
-  height: 1136
-  iconSize: 120
-  xOffset: 92
-  xGap: 32
-  yOffset: 114
-  yGap: 31
-  rows: 5
-}
-
 createSVGElement = (tagName) ->
   document.createElementNS('http://www.w3.org/2000/svg', tagName)
 
 generateIphone = ->
-  sendMessage(cmd: 'getSquircle').then((response) ->
-    points = response.points
-    svg = createSVGElement('svg')
-    svg.setAttribute('width', iphone.width / 2)
-    svg.setAttribute('height', iphone.height / 2)
-    svg.setAttribute('viewBox', "0 0 #{iphone.width} #{iphone.height}")
-    defs = createSVGElement('defs')
-    svg.appendChild(defs)
-    clipPath = createSVGElement('clipPath')
-    defs.appendChild(clipPath)
-    clipPath.setAttribute('id', 'icon')
-    clipPath.appendChild(iconClipPolygon(points))
-    q = 176
-    position = 0
-    [1..iphone.rows].forEach((row) ->
-      g = createSVGElement('g')
-      g.id = "row-#{row}"
-      g.setAttribute('transform', "translate(0, #{(row-1)*q})")
-      for i in [1..4]
-        position++
+  sendMessage(cmd: 'getIphone').then((r1) ->
+    iphone = r1.iphone
+    sendMessage(cmd: 'getSquircle').then((r2) ->
+      points = r2.points
+      svg = createSVGElement('svg')
+      svg.setAttribute('width', iphone.width / 2)
+      svg.setAttribute('height', iphone.height / 2)
+      svg.setAttribute('viewBox', "0 0 #{iphone.width} #{iphone.height}")
+      defs = createSVGElement('defs')
+      svg.appendChild(defs)
+      clipPath = createSVGElement('clipPath')
+      defs.appendChild(clipPath)
+      clipPath.setAttribute('id', 'icon')
+      clipPath.appendChild(iconClipPolygon(points))
+      getPosition = (pos) ->
+        row = Math.ceil(pos / 4)
+        col = pos % 4
+        if col == 0
+          col = 4
+        [row, col]
+      console.log iphone
+      [1..(4*iphone.rows)].forEach((position) ->
+        [row, col] = getPosition(position)
         icon = createSVGElement('g')
-        xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (i-1))
-        icon.setAttribute('transform', "translate(#{xOffset}, 114)")
+        console.log [row,col]
+        xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
+        yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
+        icon.setAttribute('transform', "translate(#{xOffset+60}, #{yOffset+60})")
         placeholder = createSVGElement('rect')
         placeholder.classList.add('icon')
         placeholder.setAttribute('x', -60)
@@ -256,10 +246,10 @@ generateIphone = ->
         placeholder.setAttribute('data-position', position)
         icon.appendChild(placeholder)
         placeholder.addEventListener('drop', iconImageDrop)
-        g.appendChild(icon)
-      svg.appendChild(g)
+        svg.appendChild(icon)
+      )
+      document.getElementById('iphone').appendChild(svg)
     )
-    document.getElementById('iphone').appendChild(svg)
   )
 
 iconClipPolygon = (points) ->

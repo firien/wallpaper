@@ -47,7 +47,16 @@ h1, h2 {
 }
 
 img:not([src]) {
-  background-color: grey;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    background-color: #555;
+  }
+  100% {
+    background-color: #FFF;
+  }
 }
 
 // SVG

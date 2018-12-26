@@ -1,14 +1,15 @@
-iphone = {
-  width: 640
-  height: 1136
-  iconSize: 120
-  xOffset: 32
-  xGap: 32
-  yOffset: 54
-  yGap: 56
-  rows: 5
+$iphones = {
+  se: {
+    width: 640
+    height: 1136
+    iconSize: 120
+    xOffset: 32
+    xGap: 32
+    yOffset: 54
+    yGap: 56
+    rows: 5
+  }
 }
-
 
 $database = null
 open = (data) ->
@@ -126,6 +127,7 @@ generateWallpaper = (data) ->
     if col == 0
       col = 4
     [row, col]
+  iphone = $iphones.se
   width  = iphone.width
   height = iphone.height
   tmpCanvas = new OffscreenCanvas(120, 120)
@@ -175,10 +177,16 @@ generateWallpaper = (data) ->
         self.postMessage(promiseId: data.promiseId, url: url, status: 201)
       )
     )
+
+getIphone = (data) ->
+  iphone = $iphones.se
+  self.postMessage(promiseId: data.promiseId, iphone: iphone, status: 200)
+
 self.addEventListener('message', (e) ->
   switch e.data.cmd
     when 'open'               then open(e.data)
     when 'getSquircle'        then getSquircle(e.data)
+    when 'getIphone'          then getIphone(e.data)
     when 'saveFile'           then saveFile(e.data)
     when 'loadImages'         then loadImages(e.data)
     when 'getImage'           then getImage(e.data)
