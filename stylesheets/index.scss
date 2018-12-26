@@ -64,11 +64,12 @@ img:not([src]) {
   width: 100vw;
   height: 100vh;
   background-color: rgba(255,255,255, 0.8);
-  button {
+  .button-bar {
+    display: flex;
     position: absolute;
-    width: 5em;
-    left: calc(50% - 2.5em);
+    width: 100vw;
     top: 80%;
+    justify-content: center;
   }
 }
 .frame {
@@ -77,6 +78,7 @@ img:not([src]) {
   stroke-width: 2px;
   fill: none;
 }
+
 button#installer {
   background: url(../images/icon-180.4685c1b46790d3de3429.png) left no-repeat;
   font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';

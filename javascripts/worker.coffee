@@ -178,6 +178,7 @@ generateWallpaper = (data) ->
 self.addEventListener('message', (e) ->
   switch e.data.cmd
     when 'open'               then open(e.data)
+    when 'getSquircle'        then getSquircle(e.data)
     when 'saveFile'           then saveFile(e.data)
     when 'loadImages'         then loadImages(e.data)
     when 'getImage'           then getImage(e.data)
@@ -245,7 +246,7 @@ rotateImage = (blob, angle) ->
   )
 
 generateThumbnail = (blob) ->
-  maxWidth = 100
+  maxWidth = 300
   createImageBitmap(blob).then((bitmap) ->
     scale = maxWidth / bitmap.width
     height = bitmap.height * scale
@@ -257,6 +258,10 @@ generateThumbnail = (blob) ->
       quality: 0.95
     )
   )
+
+getSquircle = (data) ->
+  points = iconClipPoints()
+  self.postMessage(promiseId: data.promiseId, points: points, status: 201)
 
 # generate squircle clip path
 iconClipPoints = ->
