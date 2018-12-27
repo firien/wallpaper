@@ -1,5 +1,7 @@
+# https://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
 $iphones = {
   se: {
+    scale: 2
     width: 640
     height: 1136
     iconSize: 120
@@ -9,8 +11,64 @@ $iphones = {
     yGap: 56
     rows: 5
   }
+  eight: {
+    scale: 2
+    width: 750
+    height: 1334
+    iconSize: 120
+    xOffset: 54
+    xGap: 56
+    yOffset: 56
+    yGap: 54
+    rows: 6
+  }
+  eightplus: {
+    scale: 3
+    width: 1242
+    height: 2208
+    iconSize: 180
+    xOffset: 105
+    xGap: 104
+    yOffset: 114
+    yGap: 120
+    rows: 6
+  }
+  xs: {
+    scale: 3
+    width: 1125
+    height: 2436
+    iconSize: 180
+    xOffset: 81
+    xGap: 81
+    yOffset: 216
+    yGap: 126
+    rows: 6
+  }
+  xr: {
+    scale: 2
+    width: 828
+    height: 1792
+    iconSize: 120
+    xOffset: 64
+    xGap: 62
+    yOffset: 156
+    yGap: 96
+    rows: 6
+  }
+  xsmax: {
+    scale: 3
+    width: 1242
+    height: 2688
+    iconSize: 180
+    xOffset: 96
+    xGap: 94
+    yOffset: 234
+    yGap: 145
+    rows: 7
+  }
 }
 
+$iphone = null
 $database = null
 open = (data) ->
   request = indexedDB.open('wallpaper', 2)
@@ -77,6 +135,7 @@ loadImages = (data) ->
     self.postMessage(promiseId: data.promiseId, images: results, status: 200)
 
 # square 120x120 icon
+# TODO: should also generate 3x @ 180
 generateIcon = (data) ->
   trxn = $database.transaction(['images'], 'readonly')
   store = trxn.objectStore('images')
@@ -127,10 +186,9 @@ generateWallpaper = (data) ->
     if col == 0
       col = 4
     [row, col]
-  iphone = $iphones.se
-  width  = iphone.width
-  height = iphone.height
-  tmpCanvas = new OffscreenCanvas(120, 120)
+  width  = $iphone.width
+  height = $iphone.height
+  tmpCanvas = new OffscreenCanvas($iphone.iconSize, $iphone.iconSize)
   tmpCtx = tmpCanvas.getContext('2d')
   canvas = new OffscreenCanvas(width, height)
   ctx = canvas.getContext('2d')
@@ -139,11 +197,12 @@ generateWallpaper = (data) ->
   trxn = $database.transaction(['icons'], 'readonly')
   store = trxn.objectStore('icons')
   req = store.getAll()
+  size = $iphone.iconSize / 2
   getPoints = (str) ->
-    str.split(',').map((n) -> Number(n) + 60)
+    str.split(',').map((n) -> Number(n) + size)
   req.onsuccess = (e) ->
     icons = req.result
-    points = iconClipPoints()
+    points = iconClipPoints(size)
     [startX, startY] = getPoints(points.shift())
     icons.reduce((promise, icon) ->
       promise.then( ->
@@ -162,8 +221,8 @@ generateWallpaper = (data) ->
           tmpCtx.closePath()
           tmpCtx.fill()
           [row, col] = getPosition(icon.position)
-          xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
-          yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
+          xOffset = $iphone.xOffset + (($iphone.iconSize + $iphone.xGap) * (col-1))
+          yOffset = $iphone.yOffset + (($iphone.iconSize + $iphone.yGap) * (row-1))
           ctx.drawImage(tmpCanvas, xOffset, yOffset)
         )
       )
@@ -179,8 +238,8 @@ generateWallpaper = (data) ->
     )
 
 getIphone = (data) ->
-  iphone = $iphones.se
-  self.postMessage(promiseId: data.promiseId, iphone: iphone, status: 200)
+  $iphone = $iphones[data.model]
+  self.postMessage(promiseId: data.promiseId, iphone: $iphone, status: 200)
 
 self.addEventListener('message', (e) ->
   switch e.data.cmd
@@ -268,47 +327,48 @@ generateThumbnail = (blob) ->
   )
 
 getSquircle = (data) ->
-  points = iconClipPoints()
+  size = $iphone.iconSize / 2
+  points = iconClipPoints(size)
   self.postMessage(promiseId: data.promiseId, points: points, status: 201)
 
 # generate squircle clip path
-iconClipPoints = ->
+iconClipPoints = (size) ->
   squircle = (x)->
-    (((1 - (Math.abs(x / 60) ** 5)) ** 0.2) * 60).toFixed(2)
+    (((1 - (Math.abs(x / size) ** 5)) ** 0.2) * size).toFixed(2)
 
   points = []
   x = 0
-  while x <= 25
+  while x <= (size / 2.4)
     points.push("#{x},#{squircle(x)}")
     x = x + 1
-  while x <= 60
+  while x <= size
     points.push("#{x.toFixed(2)},#{squircle(x)}")
     x = x + 0.1
 
   _points = []
   x = 0
-  while x <= 25
+  while x <= (size / 2.4)
     _points.push("#{x},#{squircle(x) * -1.0}")
     x = x + 1
-  while x <= 60
+  while x <= size
     _points.push("#{x.toFixed(2)},#{squircle(x) * -1.0}")
     x = x + 0.1
   points = points.concat(_points.reverse())
 
   x = 0
-  while x <= 25
+  while x <= (size / 2.4)
     points.push("-#{x},#{squircle(x) * -1.0}")
     x = x + 1
-  while x <= 60
+  while x <= size
     points.push("-#{x.toFixed(2)},#{squircle(x) * -1.0}")
     x = x + 0.1
 
   _points.length = 0
   x = 0
-  while x <= 25
+  while x <= (size / 2.4)
     _points.push("-#{x},#{squircle(x)}")
     x = x + 1
-  while x <= 60
+  while x <= size
     _points.push("-#{x.toFixed(2)},#{squircle(x)}")
     x = x + 0.1
   points = points.concat(_points.reverse())

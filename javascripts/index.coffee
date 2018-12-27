@@ -208,13 +208,15 @@ createSVGElement = (tagName) ->
   document.createElementNS('http://www.w3.org/2000/svg', tagName)
 
 generateIphone = ->
-  sendMessage(cmd: 'getIphone').then((r1) ->
+  div = document.getElementById('iphone')
+  emptyElement(div)
+  sendMessage(cmd: 'getIphone', model: this.value).then((r1) ->
     iphone = r1.iphone
     sendMessage(cmd: 'getSquircle').then((r2) ->
       points = r2.points
       svg = createSVGElement('svg')
-      svg.setAttribute('width', iphone.width / 2)
-      svg.setAttribute('height', iphone.height / 2)
+      svg.setAttribute('width', iphone.width / iphone.scale)
+      svg.setAttribute('height', iphone.height / iphone.scale)
       svg.setAttribute('viewBox', "0 0 #{iphone.width} #{iphone.height}")
       defs = createSVGElement('defs')
       svg.appendChild(defs)
@@ -228,27 +230,26 @@ generateIphone = ->
         if col == 0
           col = 4
         [row, col]
-      console.log iphone
+      halfIcon = iphone.iconSize / 2
       [1..(4*iphone.rows)].forEach((position) ->
         [row, col] = getPosition(position)
         icon = createSVGElement('g')
-        console.log [row,col]
         xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
         yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
-        icon.setAttribute('transform', "translate(#{xOffset+60}, #{yOffset+60})")
+        icon.setAttribute('transform', "translate(#{xOffset+halfIcon}, #{yOffset+halfIcon})")
         placeholder = createSVGElement('rect')
         placeholder.classList.add('icon')
-        placeholder.setAttribute('x', -60)
-        placeholder.setAttribute('y', -60)
-        placeholder.setAttribute('width', 120)
-        placeholder.setAttribute('height', 120)
+        placeholder.setAttribute('x', -halfIcon)
+        placeholder.setAttribute('y', -halfIcon)
+        placeholder.setAttribute('width', iphone.iconSize)
+        placeholder.setAttribute('height', iphone.iconSize)
         placeholder.setAttribute('clip-path', 'url(#icon)')
         placeholder.setAttribute('data-position', position)
         icon.appendChild(placeholder)
         placeholder.addEventListener('drop', iconImageDrop)
         svg.appendChild(icon)
       )
-      document.getElementById('iphone').appendChild(svg)
+      div.appendChild(svg)
     )
   )
 
@@ -274,7 +275,12 @@ document.addEventListener('DOMContentLoaded', ->
   document.addEventListener('dragover', (e) ->
     e.preventDefault()
   )
-  generateIphone()
+  modelSelect = document.getElementById('model')
+  modelSelect.addEventListener('change', ->
+    generateIphone.call(this)
+    loadIcons()
+  )
+  generateIphone.call(modelSelect)
   document.getElementById('make-wallpaper').addEventListener('click', ->
     sendMessage(cmd: 'generateWallpaper', backgroundColor: backgroundColorPicker.value).then((response) ->
       a = document.createElement('a')

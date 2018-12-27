@@ -22,8 +22,13 @@ html(lang="en")
   body
     div.flex
       div#palette
-        select
-          option(value='iPhoneSE') iPhoneSE
+        select#model
+          option(value='se') iPhoneSE
+          option(value='eight') iPhone 6/7/8
+          option(value='eightplus') iPhone 6/7/8 Plus
+          option(value='xr') iPhone XR
+          option(value='xs') iPhone Xs
+          option(value='xsmax') iPhone Xs Max
         #iphone
         input#background-color(type='color')
         button#make-wallpaper(type=button) Make Wallpaper
