@@ -64,6 +64,18 @@ img:not([src]) {
   fill: red;
 }
 
+use.remove {
+  visibility: hidden;
+  fill: white;
+}
+
+svg > g {
+  pointer-events: all;
+  &:hover use {
+    visibility: visible;
+    cursor: pointer;
+  }
+}
 
 .modal {
   z-index: 100;

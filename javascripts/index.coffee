@@ -2,6 +2,7 @@
 $worker = new Worker('__worker__', name: 'wallpaper')
 $palette = null
 $maxWidth = 150
+$iphone = null
 
 sendMessage = (opts, buffers) ->
   opts.promiseId = nanoid(16)
@@ -41,22 +42,25 @@ emptyElement = (element) ->
   while element.firstChild
     element.removeChild(element.firstChild)
 
+
+loadIcon = (url, position) ->
+  position = Number(position)
+  placeholder = document.querySelector("#iphone svg g rect[data-position='#{position}']")
+  g = placeholder.parentElement
+  placeholder?.removeEventListener('drop', iconImageDrop)
+  img = createSVGElement('image')
+  img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url)
+  img.setAttribute('x', $iphone.iconSize / -2)
+  img.setAttribute('y', $iphone.iconSize / -2)
+  img.setAttribute('width', $iphone.iconSize)
+  img.setAttribute('height', $iphone.iconSize)
+  img.setAttribute('clip-path', 'url(#icon)')
+  g.replaceChild(img, placeholder)
+
 loadIcons = ->
   sendMessage(cmd: 'loadIcons').then((e) ->
     for position, url of e.icons
-      position = Number(position)
-      placeholder = document.querySelector("#iphone svg g rect[data-position='#{position}']")
-      g = placeholder.parentElement
-      placeholder?.removeEventListener('drop', iconImageDrop)
-      emptyElement(g)
-      img = createSVGElement('image')
-      img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url)
-      img.setAttribute('x', '-60')
-      img.setAttribute('y', '-60')
-      img.setAttribute('width', '120')
-      img.setAttribute('height', '120')
-      img.setAttribute('clip-path', 'url(#icon)')
-      g.appendChild(img)
+      loadIcon(url, position)
   )
 
 loadImages = ->
@@ -146,12 +150,12 @@ positionImage = (image, position) ->
     ctm = img.getCTM()
     # position relative to icon target
     scale = ctm.a / 2
-    dx = (ctm.e / 2) - x + 60
-    dy = (ctm.f / 2) - y + 60
-    sendMessage({cmd: 'generateIcon', id: image.id, scale, dx, dy, position}).then( ->
+    dx = (ctm.e / 2) - x + ($iphone.iconSize / 2)
+    dy = (ctm.f / 2) - y + ($iphone.iconSize / 2)
+    sendMessage({cmd: 'generateIcon', id: image.id, scale, dx, dy, position}).then((response) ->
       emptyElement(div)
       document.body.removeChild(div)
-      loadIcons()
+      loadIcon(response.url, position)
     )
   )
 
@@ -211,47 +215,63 @@ generateIphone = ->
   div = document.getElementById('iphone')
   emptyElement(div)
   sendMessage(cmd: 'getIphone', model: this.value).then((r1) ->
-    iphone = r1.iphone
+    $iphone = r1.iphone
     sendMessage(cmd: 'getSquircle').then((r2) ->
       points = r2.points
       svg = createSVGElement('svg')
-      svg.setAttribute('width', iphone.width / iphone.scale)
-      svg.setAttribute('height', iphone.height / iphone.scale)
-      svg.setAttribute('viewBox', "0 0 #{iphone.width} #{iphone.height}")
+      svg.setAttribute('width', $iphone.width / $iphone.scale)
+      svg.setAttribute('height', $iphone.height / $iphone.scale)
+      svg.setAttribute('viewBox', "0 0 #{$iphone.width} #{$iphone.height}")
       defs = createSVGElement('defs')
       svg.appendChild(defs)
       clipPath = createSVGElement('clipPath')
       defs.appendChild(clipPath)
       clipPath.setAttribute('id', 'icon')
       clipPath.appendChild(iconClipPolygon(points))
+      # delete button
+      path = createSVGElement('path')
+      path.setAttribute('id', 'remove')
+      path.setAttribute('d', 'M 0,0 a 24 24 0 0 0 0,48 a 24 24 0 0 0 0,-48 z')
+      defs.appendChild(path)
       getPosition = (pos) ->
         row = Math.ceil(pos / 4)
         col = pos % 4
         if col == 0
           col = 4
         [row, col]
-      halfIcon = iphone.iconSize / 2
-      [1..(4*iphone.rows)].forEach((position) ->
+      halfIcon = $iphone.iconSize / 2
+      [1..(4*$iphone.rows)].forEach((position) ->
         [row, col] = getPosition(position)
-        icon = createSVGElement('g')
-        xOffset = iphone.xOffset + ((iphone.iconSize + iphone.xGap) * (col-1))
-        yOffset = iphone.yOffset + ((iphone.iconSize + iphone.yGap) * (row-1))
-        icon.setAttribute('transform', "translate(#{xOffset+halfIcon}, #{yOffset+halfIcon})")
+        g = createSVGElement('g')
+        xOffset = $iphone.xOffset + (($iphone.iconSize + $iphone.xGap) * (col-1))
+        yOffset = $iphone.yOffset + (($iphone.iconSize + $iphone.yGap) * (row-1))
+        g.setAttribute('transform', "translate(#{xOffset+halfIcon}, #{yOffset+halfIcon})")
         placeholder = createSVGElement('rect')
         placeholder.classList.add('icon')
         placeholder.setAttribute('x', -halfIcon)
         placeholder.setAttribute('y', -halfIcon)
-        placeholder.setAttribute('width', iphone.iconSize)
-        placeholder.setAttribute('height', iphone.iconSize)
+        placeholder.setAttribute('width', $iphone.iconSize)
+        placeholder.setAttribute('height', $iphone.iconSize)
         placeholder.setAttribute('clip-path', 'url(#icon)')
         placeholder.setAttribute('data-position', position)
-        icon.appendChild(placeholder)
+        g.appendChild(placeholder)
         placeholder.addEventListener('drop', iconImageDrop)
-        svg.appendChild(icon)
+        button = createSVGElement('use')
+        button.classList.add('remove')
+        button.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#remove')
+        button.setAttribute('x', -halfIcon)
+        button.setAttribute('y', -halfIcon-24)
+        button.addEventListener('click', deleteIcon)
+        g.appendChild(button)
+        svg.appendChild(g)
       )
       div.appendChild(svg)
+      loadIcons()
     )
   )
+
+deleteIcon = (e) ->
+  alert 'delete'
 
 iconClipPolygon = (points) ->
   polygon = createSVGElement('polygon')
@@ -278,9 +298,10 @@ document.addEventListener('DOMContentLoaded', ->
   modelSelect = document.getElementById('model')
   modelSelect.addEventListener('change', ->
     generateIphone.call(this)
-    loadIcons()
   )
-  generateIphone.call(modelSelect)
+  opened.then( ->
+    generateIphone.call(modelSelect)
+  )
   document.getElementById('make-wallpaper').addEventListener('click', ->
     sendMessage(cmd: 'generateWallpaper', backgroundColor: backgroundColorPicker.value).then((response) ->
       a = document.createElement('a')
@@ -289,5 +310,4 @@ document.addEventListener('DOMContentLoaded', ->
       a.click()
     )
   )
-  opened.then(loadIcons)
 )

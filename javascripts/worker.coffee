@@ -48,7 +48,7 @@ $iphones = {
     scale: 2
     width: 828
     height: 1792
-    iconSize: 120
+    iconSize: 128
     xOffset: 64
     xGap: 62
     yOffset: 156
@@ -59,12 +59,12 @@ $iphones = {
     scale: 3
     width: 1242
     height: 2688
-    iconSize: 180
+    iconSize: 192
     xOffset: 96
     xGap: 94
     yOffset: 234
     yGap: 145
-    rows: 7
+    rows: 6
   }
 }
 
@@ -134,33 +134,50 @@ loadImages = (data) ->
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, images: results, status: 200)
 
-# square 120x120 icon
-# TODO: should also generate 3x @ 180
+# square icon
 generateIcon = (data) ->
   trxn = $database.transaction(['images'], 'readonly')
   store = trxn.objectStore('images')
   req = store.get(Number(data.id))
+  requestedSize = $iphone.iconSize
   req.onsuccess = (e) ->
     blob = req.result.original
-    canvas = new OffscreenCanvas(120,120)
-    ctx = canvas.getContext('2d')
     createImageBitmap(blob).then((bitmap) ->
-      ctx.drawImage(bitmap, data.dx, data.dy, bitmap.width * data.scale, bitmap.height * data.scale)
-      canvas.convertToBlob(
-        type: 'image/jpeg',
-        quality: 0.95
-      ).then((blob) ->
-        saveIcon(blob, data.position).then( ->
-          self.postMessage(promiseId: data.promiseId, status: 200)
+      sizes = Object.values($iphones).map((model) -> model.iconSize).filter((e,i,a) -> a.indexOf(e) == i)
+      # make icon for each iphone model
+      Promise.all(sizes.map((size) ->
+        canvas = new OffscreenCanvas(size, size)
+        ctx = canvas.getContext('2d')
+        if size == requestedSize
+          x = data.dx
+          y = data.dy
+          scale = data.scale
+        else
+          scale = size * data.scale / requestedSize
+          shift = (requestedSize - size) / 2
+          x =  ((data.dx / data.scale) - shift) * scale
+          y =  ((data.dy / data.scale) - shift) * scale
+        ctx.drawImage(bitmap, x, y, bitmap.width * scale, bitmap.height * scale)
+        canvas.convertToBlob(
+          type: 'image/jpeg',
+          quality: 0.95
+        ).then((blob) ->
+          return {size, blob}
+        )
+      )).then((icons) ->
+        blob = icons.find((i) -> i.size == requestedSize).blob
+        saveIcon(icons, data.position).then( ->
+          url = URL.createObjectURL(blob)
+          self.postMessage(promiseId: data.promiseId, url: url, status: 201)
         )
       )
     )
 
-saveIcon = (blob, position) ->
+saveIcon = (icons, position) ->
   new Promise((resolve, reject) ->
     trxn = $database.transaction(['icons'], 'readwrite')
     store = trxn.objectStore('icons')
-    req = store.put(position: Number(position), icon: blob)
+    req = store.put(position: Number(position), icons: icons)
     trxn.oncomplete = resolve
     #TODO: errors
   )
@@ -174,7 +191,8 @@ loadIcons = (data) ->
     cursor = req.result
     if cursor?
       icon = cursor.value
-      results[icon.position] = URL.createObjectURL(icon.icon)
+      blob = icon.icons.find((i) -> i.size == $iphone.iconSize).blob
+      results[icon.position] = URL.createObjectURL(blob)
       cursor.continue()
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, icons: results, status: 200)
@@ -206,7 +224,8 @@ generateWallpaper = (data) ->
     [startX, startY] = getPoints(points.shift())
     icons.reduce((promise, icon) ->
       promise.then( ->
-        createImageBitmap(icon.icon).then((bitmap) ->
+        blob = icon.icons.find((i) -> i.size == $iphone.iconSize).blob
+        createImageBitmap(blob).then((bitmap) ->
           #draw clipped icon to tmp canvas
           tmpCtx.clearRect(0, 0, tmpCanvas.width, tmpCanvas.height)
           tmpCtx.globalCompositeOperation = 'source-over'
