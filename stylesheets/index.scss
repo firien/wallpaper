@@ -66,10 +66,12 @@ img:not([src]) {
 
 use.remove {
   visibility: hidden;
-  fill: white;
 }
 
-svg > g {
+svg g image + rect {
+  visibility: hidden;
+}
+svg > g[data-id] {
   pointer-events: all;
   &:hover use {
     visibility: visible;

@@ -43,24 +43,25 @@ emptyElement = (element) ->
     element.removeChild(element.firstChild)
 
 
-loadIcon = (url, position) ->
-  position = Number(position)
+loadIcon = (icon) ->
+  position = Number(icon.position)
   placeholder = document.querySelector("#iphone svg g rect[data-position='#{position}']")
   g = placeholder.parentElement
-  placeholder?.removeEventListener('drop', iconImageDrop)
+  # placeholder?.removeEventListener('drop', iconImageDrop)
   img = createSVGElement('image')
-  img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url)
+  img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', icon.url)
   img.setAttribute('x', $iphone.iconSize / -2)
   img.setAttribute('y', $iphone.iconSize / -2)
   img.setAttribute('width', $iphone.iconSize)
   img.setAttribute('height', $iphone.iconSize)
-  img.setAttribute('clip-path', 'url(#icon)')
-  g.replaceChild(img, placeholder)
+  # img.setAttribute('clip-path', 'url(#icon)')
+  g.setAttribute('data-id', icon.id)
+  # g.replaceChild(img, placeholder)
+  g.insertBefore(img, placeholder)
 
 loadIcons = ->
   sendMessage(cmd: 'loadIcons').then((e) ->
-    for position, url of e.icons
-      loadIcon(url, position)
+    e.icons.forEach(loadIcon)
   )
 
 loadImages = ->
@@ -155,7 +156,7 @@ positionImage = (image, position) ->
     sendMessage({cmd: 'generateIcon', id: image.id, scale, dx, dy, position}).then((response) ->
       emptyElement(div)
       document.body.removeChild(div)
-      loadIcon(response.url, position)
+      loadIcon(response.icon)
     )
   )
 
@@ -229,10 +230,20 @@ generateIphone = ->
       clipPath.setAttribute('id', 'icon')
       clipPath.appendChild(iconClipPolygon(points))
       # delete button
+      groupButton = createSVGElement('g')
+      groupButton.setAttribute('id', 'remove')
+      groupButton.setAttribute('transform', 'rotate(45)')
+      circle = createSVGElement('circle')
+      circle.setAttribute('cx', 0)
+      circle.setAttribute('cy', 0)
+      circle.setAttribute('r', 24)
+      circle.setAttribute('fill', 'rgba(255,255,255,0.9)')
+      groupButton.appendChild(circle)
       path = createSVGElement('path')
-      path.setAttribute('id', 'remove')
-      path.setAttribute('d', 'M 0,0 a 24 24 0 0 0 0,48 a 24 24 0 0 0 0,-48 z')
-      defs.appendChild(path)
+      path.setAttribute('d', 'M -2,-16 h 4 v 32 h -4 z M -16,-2 h 32 v 4 h -32 z')
+      path.setAttribute('fill', '#444')
+      groupButton.appendChild(path)
+      defs.appendChild(groupButton)
       getPosition = (pos) ->
         row = Math.ceil(pos / 4)
         col = pos % 4
@@ -260,7 +271,7 @@ generateIphone = ->
         button.classList.add('remove')
         button.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#remove')
         button.setAttribute('x', -halfIcon)
-        button.setAttribute('y', -halfIcon-24)
+        button.setAttribute('y', -halfIcon)
         button.addEventListener('click', deleteIcon)
         g.appendChild(button)
         svg.appendChild(g)
@@ -271,7 +282,13 @@ generateIphone = ->
   )
 
 deleteIcon = (e) ->
-  alert 'delete'
+  g = this.parentNode
+  img = g.querySelector('image')
+  id = Number(g.getAttribute('data-id'))
+  sendMessage(cmd: 'deleteIcon', id: id).then( ->
+    g.removeAttribute('data-id')
+    g.removeChild(img)
+  )
 
 iconClipPolygon = (points) ->
   polygon = createSVGElement('polygon')

@@ -153,10 +153,14 @@ generateIcon = (data) ->
           y = data.dy
           scale = data.scale
         else
+          # if size == 120
+          #   debugger
           scale = size * data.scale / requestedSize
           shift = (requestedSize - size) / 2
-          x =  ((data.dx / data.scale) - shift) * scale
-          y =  ((data.dy / data.scale) - shift) * scale
+          x = ((data.dx / data.scale) - shift) * scale
+          y = ((data.dy / data.scale) - shift) * scale
+          console.log [x,y,scale,size]
+          console.log [data.dx,data.dy,data.scale,requestedSize]
         ctx.drawImage(bitmap, x, y, bitmap.width * scale, bitmap.height * scale)
         canvas.convertToBlob(
           type: 'image/jpeg',
@@ -166,9 +170,10 @@ generateIcon = (data) ->
         )
       )).then((icons) ->
         blob = icons.find((i) -> i.size == requestedSize).blob
-        saveIcon(icons, data.position).then( ->
+        saveIcon(icons, data.position).then((id) ->
+          position = data.position
           url = URL.createObjectURL(blob)
-          self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+          self.postMessage(promiseId: data.promiseId, icon: {id, position, url}, status: 201)
         )
       )
     )
@@ -178,21 +183,28 @@ saveIcon = (icons, position) ->
     trxn = $database.transaction(['icons'], 'readwrite')
     store = trxn.objectStore('icons')
     req = store.put(position: Number(position), icons: icons)
-    trxn.oncomplete = resolve
+    req.onsuccess = ->
+      id = req.result
+      resolve(id)
+    # trxn.oncomplete = resolve
     #TODO: errors
   )
 
 loadIcons = (data) ->
   trxn = $database.transaction(['icons'], 'readonly')
   store = trxn.objectStore('icons')
-  results = {}
+  results = []
   req = store.openCursor()
   req.onsuccess = (e) ->
     cursor = req.result
     if cursor?
       icon = cursor.value
       blob = icon.icons.find((i) -> i.size == $iphone.iconSize).blob
-      results[icon.position] = URL.createObjectURL(blob)
+      results.push(
+        position: icon.position
+        url: URL.createObjectURL(blob)
+        id: icon.id
+      )
       cursor.continue()
   trxn.oncomplete = ->
     self.postMessage(promiseId: data.promiseId, icons: results, status: 200)
@@ -260,6 +272,13 @@ getIphone = (data) ->
   $iphone = $iphones[data.model]
   self.postMessage(promiseId: data.promiseId, iphone: $iphone, status: 200)
 
+deleteIcon = (data) ->
+  trxn = $database.transaction(['icons'], 'readwrite')
+  store = trxn.objectStore('icons')
+  store.delete(data.id)
+  trxn.oncomplete = ->
+    self.postMessage(promiseId: data.promiseId, status: 204)
+
 self.addEventListener('message', (e) ->
   switch e.data.cmd
     when 'open'               then open(e.data)
@@ -269,6 +288,7 @@ self.addEventListener('message', (e) ->
     when 'loadImages'         then loadImages(e.data)
     when 'getImage'           then getImage(e.data)
     when 'loadIcons'          then loadIcons(e.data)
+    when 'deleteIcon'         then deleteIcon(e.data)
     when 'generateIcon'       then generateIcon(e.data)
     when 'generateWallpaper'  then generateWallpaper(e.data)
 )
