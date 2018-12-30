@@ -21,17 +21,21 @@ html(lang="en")
     link(rel="manifest", href="manifest.webmanifest")
   body
     div.flex
-      div#palette
-        select#model
-          option(value='se') iPhoneSE
-          option(value='eight') iPhone 6/7/8
-          option(value='eightplus') iPhone 6/7/8 Plus
-          option(value='xr') iPhone XR
-          option(value='xs') iPhone Xs
-          option(value='xsmax') iPhone Xs Max
-        #iphone
-        input#background-color(type='color')
-        button#make-wallpaper(type=button) Make Wallpaper
-      div#images
-        h2.center Drag & Drop Images here
+      div.flex.column.page
+        div#palette.column
+          .toolbar.pin
+            select#model
+              option(value='se') iPhone SE
+              option(value='eight') iPhone 6/7/8
+              option(value='eightplus') iPhone 6/7/8 Plus
+              option(value='xr') iPhone XR
+              option(value='xs') iPhone Xs
+              option(value='xsmax') iPhone Xs Max
+            .grow
+            input#background-color(type='color')
+          #iphone
+        .toolbar.make
+          button#make-wallpaper(type=button) Make Wallpaper
+      div#images.page
+        h2.center Drag & Drop Photos here
         div#gallery

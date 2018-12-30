@@ -9,26 +9,49 @@ body {
 .flex > * {
   margin: 0;
   flex: 1 50%;
-  height: 100vh;
-  padding: 1em;
   box-sizing: border-box;
   font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';
   font-size: 1em;
-  overflow-y: auto;
 }
-
-#palette {
-  overflow-y: hidden;
+.toolbar {
   display: flex;
+  align-self: stretch;
+  padding: 1em;
+  align-items: center;
+  background-color: rgba(255,255,255,0.25);
+}
+.pin {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 1px;
+}
+.make {
+  flex: 0 0;
+}
+.grow {
+  flex: 1 0;
+}
+.column {
   flex-direction: column;
+}
+.page {
+  height: 100vh;
+  max-height: 100vh;
+}
+#palette {
+  flex: 1 0 90%;
+  overflow-y: auto;
+//  display: flex;
   align-items: flex-start;
   justify-content: center;
   &> * {
-    flex: 0 0 2em;
+    flex: 0 0 auto;
   }
   #iphone {
-    align-self: center;
+    margin-top: 1em;
+    align-self: stretch;
     flex: 1 0;
+    text-align: center;
     svg {
       border: thin black solid;
     }
@@ -44,10 +67,6 @@ h1, h2 {
 
 .center {
   text-align: center;
-}
-
-img:not([src]) {
-  animation: pulse 1s infinite alternate;
 }
 
 @keyframes pulse {
@@ -100,6 +119,32 @@ svg > g[data-id] {
   stroke: black;
   stroke-width: 2px;
   fill: none;
+}
+
+#images {
+  background-color: ivory;
+  flex: 0 0 60%;
+  padding: 1em;
+  overflow-y: auto;
+}
+#gallery {
+//  display: flex;
+//  flex-wrap: wrap;
+//  justify-content: space-between;
+  img {
+//    flex: 0 0;
+    margin: 0.3em;
+    transition: transform .1s ease-in-out;
+    padding: 0.5em 0.5em 2em 0.5em;
+    border: thin solid black;
+    background-color: white;
+    &:not([src]) {
+      animation: pulse 1s infinite alternate;
+    }
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
 }
 
 button#installer {

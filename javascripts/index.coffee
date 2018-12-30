@@ -54,7 +54,7 @@ loadIcon = (icon) ->
   img.setAttribute('y', $iphone.iconSize / -2)
   img.setAttribute('width', $iphone.iconSize)
   img.setAttribute('height', $iphone.iconSize)
-  # img.setAttribute('clip-path', 'url(#icon)')
+  img.setAttribute('clip-path', 'url(#icon)')
   g.setAttribute('data-id', icon.id)
   # g.replaceChild(img, placeholder)
   g.insertBefore(img, placeholder)
@@ -203,7 +203,7 @@ initTranslation = (e) ->
   window.addEventListener('pointerup', pointerup)
 
 setBackground = (e) ->
-  $palette.style.backgroundColor = this.value
+  $palette.parentElement.style.backgroundColor = this.value
   try
     localStorage?.setItem('background-color', this.value)
   catch e
