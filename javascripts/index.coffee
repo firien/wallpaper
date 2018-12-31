@@ -48,17 +48,18 @@ emptyElement = (element) ->
 loadIcon = (icon) ->
   position = Number(icon.position)
   placeholder = document.querySelector("#iphone svg g rect[data-position='#{position}']")
-  g = placeholder.parentElement
-  # placeholder?.removeEventListener('drop', iconImageDrop)
-  img = createSVGElement('image')
-  img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', icon.url)
-  img.setAttribute('x', $iphone.iconSize / -2)
-  img.setAttribute('y', $iphone.iconSize / -2)
-  img.setAttribute('width', $iphone.iconSize)
-  img.setAttribute('height', $iphone.iconSize)
-  img.setAttribute('clip-path', 'url(#icon)')
-  g.setAttribute('data-id', icon.id)
-  g.insertBefore(img, placeholder)
+  # if icon was created on a large iphone and now a smaller model is loaded - the position may not exist
+  if placeholder?
+    g = placeholder.parentElement
+    img = createSVGElement('image')
+    img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', icon.url)
+    img.setAttribute('x', $iphone.iconSize / -2)
+    img.setAttribute('y', $iphone.iconSize / -2)
+    img.setAttribute('width', $iphone.iconSize)
+    img.setAttribute('height', $iphone.iconSize)
+    img.setAttribute('clip-path', 'url(#icon)')
+    g.setAttribute('data-id', icon.id)
+    g.insertBefore(img, placeholder)
 
 loadIcons = ->
   sendMessage(cmd: 'loadIcons').then((e) ->
