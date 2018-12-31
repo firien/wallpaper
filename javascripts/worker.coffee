@@ -142,39 +142,38 @@ generateIcon = (data) ->
   requestedSize = $iphone.iconSize
   req.onsuccess = (e) ->
     blob = req.result.original
-    createImageBitmap(blob).then((bitmap) ->
-      sizes = Object.values($iphones).map((model) -> model.iconSize).filter((e,i,a) -> a.indexOf(e) == i)
-      # make icon for each iphone model
-      Promise.all(sizes.map((size) ->
-        canvas = new OffscreenCanvas(size, size)
-        ctx = canvas.getContext('2d')
-        if size == requestedSize
-          x = data.dx
-          y = data.dy
-          scale = data.scale
-        else
-          # if size == 120
-          #   debugger
-          scale = size * data.scale / requestedSize
-          shift = (requestedSize - size) / 2
-          x = ((data.dx / data.scale) - shift) * scale
-          y = ((data.dy / data.scale) - shift) * scale
-          console.log [x,y,scale,size]
-          console.log [data.dx,data.dy,data.scale,requestedSize]
-        ctx.drawImage(bitmap, x, y, bitmap.width * scale, bitmap.height * scale)
+    sizes = Object.values($iphones).map((model) -> model.iconSize).filter((e,i,a) -> a.indexOf(e) == i)
+    # make icon for each iphone model
+    Promise.all(sizes.map((size) ->
+      canvas = new OffscreenCanvas(size, size)
+      ctx = canvas.getContext('2d')
+      x = Math.round(data.dx / data.scale) * -1
+      y = Math.round(data.dy / data.scale) * -1
+      if size == requestedSize
+        sw = sh = Math.round(size / data.scale)
+      else
+        scale = size * data.scale / requestedSize
+        shift = (requestedSize - size) / 2
+        x = x + shift
+        y = y + shift
+        sw = sh = Math.round(size / scale)
+        # console.log [x,y,scale,size]
+        # console.log [data.dx,data.dy,data.scale,requestedSize]
+      createImageBitmap(blob, x, y, sw, sh, resizeWidth: size, resizeHeight: size, resizeQuality: 'high').then((bitmap) ->
+        ctx.drawImage(bitmap, 0, 0)
         canvas.convertToBlob(
           type: 'image/jpeg',
           quality: 0.95
         ).then((blob) ->
           return {size, blob}
         )
-      )).then((icons) ->
-        blob = icons.find((i) -> i.size == requestedSize).blob
-        saveIcon(icons, data.position).then((id) ->
-          position = data.position
-          url = URL.createObjectURL(blob)
-          self.postMessage(promiseId: data.promiseId, icon: {id, position, url}, status: 201)
-        )
+      )
+    )).then((icons) ->
+      blob = icons.find((i) -> i.size == requestedSize).blob
+      saveIcon(icons, data.position).then((id) ->
+        position = data.position
+        url = URL.createObjectURL(blob)
+        self.postMessage(promiseId: data.promiseId, icon: {id, position, url}, status: 201)
       )
     )
 
@@ -353,12 +352,10 @@ rotateImage = (blob, angle) ->
 
 generateThumbnail = (blob) ->
   maxWidth = 300
-  createImageBitmap(blob).then((bitmap) ->
-    scale = maxWidth / bitmap.width
-    height = bitmap.height * scale
-    canvas = new OffscreenCanvas(maxWidth, height)
+  createImageBitmap(blob, resizeWidth: maxWidth, resizeQuality: 'high').then((bitmap) ->
+    canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
     ctx = canvas.getContext('2d')
-    ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0, maxWidth, height)
+    ctx.drawImage(bitmap, 0, 0)
     canvas.convertToBlob(
       type: 'image/jpeg',
       quality: 0.95
