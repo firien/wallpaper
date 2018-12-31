@@ -146,21 +146,12 @@ generateIcon = (data) ->
     blob = req.result.original
     sizes = Object.values($iphones).map((model) -> model.iconSize).filter((e,i,a) -> a.indexOf(e) == i)
     # make icon for each iphone model
+    x = Math.round(data.dx / data.scale) * -1
+    y = Math.round(data.dy / data.scale) * -1
+    sw = sh = Math.round(requestedSize / data.scale)
     Promise.all(sizes.map((size) ->
       canvas = new OffscreenCanvas(size, size)
       ctx = canvas.getContext('2d')
-      x = Math.round(data.dx / data.scale) * -1
-      y = Math.round(data.dy / data.scale) * -1
-      if size == requestedSize
-        sw = sh = Math.round(size / data.scale)
-      else
-        scale = size * data.scale / requestedSize
-        shift = (requestedSize - size) / 2
-        x = x + shift
-        y = y + shift
-        sw = sh = Math.round(size / scale)
-        # console.log [x,y,scale,size]
-        # console.log [data.dx,data.dy,data.scale,requestedSize]
       createImageBitmap(blob, x, y, sw, sh, resizeWidth: size, resizeHeight: size, resizeQuality: 'high').then((bitmap) ->
         ctx.drawImage(bitmap, 0, 0)
         canvas.convertToBlob(
