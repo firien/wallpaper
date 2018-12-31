@@ -33,6 +33,9 @@ fileDropHandler = (e) ->
         sendMessage(cmd: 'saveFile', file: buffer, type: file.type, [buffer]).then((response) ->
           image.onload = ->
             this.setAttribute('height', this.naturalHeight / 2)
+            this.setAttribute('draggable', 'true')
+            this.setAttribute('data-id', response.id)
+            this.addEventListener('dragstart', iconImageDragStart)
           image.src = response.url
         )
       )
@@ -41,7 +44,6 @@ fileDropHandler = (e) ->
 emptyElement = (element) ->
   while element.firstChild
     element.removeChild(element.firstChild)
-
 
 loadIcon = (icon) ->
   position = Number(icon.position)
@@ -56,7 +58,6 @@ loadIcon = (icon) ->
   img.setAttribute('height', $iphone.iconSize)
   img.setAttribute('clip-path', 'url(#icon)')
   g.setAttribute('data-id', icon.id)
-  # g.replaceChild(img, placeholder)
   g.insertBefore(img, placeholder)
 
 loadIcons = ->
@@ -290,6 +291,11 @@ deleteIcon = (e) ->
     g.removeChild(img)
   )
 
+deletePhotos = ->
+  sendMessage(cmd: 'deletePhotos').then( ->
+    emptyElement(document.getElementById('gallery'))
+  )
+
 iconClipPolygon = (points) ->
   polygon = createSVGElement('polygon')
   polygon.setAttribute('points', points.join(' '))
@@ -308,6 +314,7 @@ document.addEventListener('DOMContentLoaded', ->
       setBackground.call(backgroundColorPicker)
   catch e
     null
+  document.getElementById('delete-photos').addEventListener('click', deletePhotos)
   document.addEventListener('drop', fileDropHandler)
   document.addEventListener('dragover', (e) ->
     e.preventDefault()

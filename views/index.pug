@@ -37,5 +37,12 @@ html(lang="en")
         .toolbar.make
           button#make-wallpaper(type=button) Make Wallpaper
       div#images.page
-        h2.center Drag & Drop Photos here
+        .toolbar.pin
+          .center Drag & Drop Photos here
+          .grow
+          button#delete-photos Delete
         div#gallery
+        #about
+          :markdown-it
+            This is a [PWA](https://developer.mozilla.org/en-US/docs/Web/Apps/Progressive). It can be used offline, it does not communicate with any servers. All images and photos stay on your machine, everything is done in your browser. Source code is available on [GitHub](https://github.com/firien/wallpaper).
+        

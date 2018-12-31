@@ -97,13 +97,15 @@ saveFile = (data) ->
       generateThumbnail(blob).then((thumbnail) ->
         trxn = $database.transaction(['images'], 'readwrite')
         store = trxn.objectStore('images')
-        store.add(
+        req = store.add(
           original:  blob
           thumbnail: thumbnail
         )
-        trxn.oncomplete = ->
+        req.onsuccess = ->
+          id = req.result
           url = URL.createObjectURL(thumbnail)
-          self.postMessage(promiseId: data.promiseId, url: url, status: 201)
+          self.postMessage(promiseId: data.promiseId, id: id, url: url, status: 201)
+        # trxn.oncomplete = ->
       )
     if angle != 0
       rotateImage(blob, angle).then(saveBlob)
@@ -271,6 +273,13 @@ getIphone = (data) ->
   $iphone = $iphones[data.model]
   self.postMessage(promiseId: data.promiseId, iphone: $iphone, status: 200)
 
+deletePhotos = (data) ->
+  trxn = $database.transaction(['images'], 'readwrite')
+  store = trxn.objectStore('images')
+  store.clear()
+  trxn.oncomplete = ->
+    self.postMessage(promiseId: data.promiseId, status: 204)
+
 deleteIcon = (data) ->
   trxn = $database.transaction(['icons'], 'readwrite')
   store = trxn.objectStore('icons')
@@ -290,6 +299,7 @@ self.addEventListener('message', (e) ->
     when 'deleteIcon'         then deleteIcon(e.data)
     when 'generateIcon'       then generateIcon(e.data)
     when 'generateWallpaper'  then generateWallpaper(e.data)
+    when 'deletePhotos'       then deletePhotos(e.data)
 )
 
 # https://stackoverflow.com/questions/7584794/

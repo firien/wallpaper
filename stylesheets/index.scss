@@ -124,13 +124,29 @@ svg > g[data-id] {
 #images {
   background-color: ivory;
   flex: 0 0 60%;
-  padding: 1em;
   overflow-y: auto;
+  .toolbar {
+    z-index: 25;
+    border-bottom: thin solid #ddd;
+    background-color: rgba(255,255,241,0.9);
+    .center {
+      font-weight: 600;
+      font-size: 1.25em;
+    }
+  }
+}
+#about {
+  text-align: center;
+  border-top: thin solid #ddd;
 }
 #gallery {
+  &:empty + #about {
+    margin-top: 3em;
+  }
 //  display: flex;
 //  flex-wrap: wrap;
 //  justify-content: space-between;
+  padding: 1em;
   img {
 //    flex: 0 0;
     margin: 0.3em;
