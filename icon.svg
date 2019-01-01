@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg height='512' viewBox='0 0 128 128' width='512' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns="http://www.w3.org/2000/svg">
+  <style type="text/css">
+    <![CDATA[
+      rect#bg {
+        fill: rgb(255,255,241);
+      }
+    ]]>
+  </style>
+  <rect id='bg' x='0' y='0' width='128' height='128'/>
+  <rect x='16' y='16' width='40' height='40' rx='8' ry='8' fill="rgb(222,132,247)"/>
+  <rect x='72' y='16' width='40' height='40' rx='8' ry='8' fill="rgb(255,145,50)"/>
+  <rect x='72' y='72' width='40' height='40' rx='8' ry='8' fill="rgb(0,85,142)"/>
+  <rect x='16' y='72' width='40' height='40' rx='8' ry='8' fill="rgb(255,123,123)"/>
+</svg>

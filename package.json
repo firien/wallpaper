@@ -1,0 +1,22 @@
+{
+  "name": "wallpaper",
+  "version": "1.0.0",
+  "description": "create ios wallpapers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "clean-webpack-plugin": "^1.0.0",
+    "gh-pwa": "github:firien/gh-pwa#worker",
+    "jstransformer-markdown-it": "^2.1.0",
+    "nanoid": "^2.0.0",
+    "webpack": "^4.27.1",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.1.2"
+  }
+}
