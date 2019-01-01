@@ -1,0 +1,155 @@
+body {
+  margin: 0;
+  height: 100vh;
+  overflow-y: hidden; }
+
+.flex {
+  display: flex; }
+
+.flex > * {
+  margin: 0;
+  flex: 1 50%;
+  box-sizing: border-box;
+  font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';
+  font-size: 1em; }
+
+.toolbar {
+  display: flex;
+  align-self: stretch;
+  padding: 1em;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.25); }
+
+.pin {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 1px; }
+
+.make {
+  flex: 0 0; }
+
+.grow {
+  flex: 1 0; }
+
+.column {
+  flex-direction: column; }
+
+.page {
+  height: 100vh;
+  max-height: 100vh; }
+
+#palette {
+  flex: 1 0 90%;
+  overflow-y: auto;
+  align-items: flex-start;
+  justify-content: center; }
+  #palette > * {
+    flex: 0 0 auto; }
+  #palette #iphone {
+    margin-top: 1em;
+    align-self: stretch;
+    flex: 1 0;
+    text-align: center; }
+    #palette #iphone svg {
+      border: thin black solid; }
+
+h1, h2 {
+  border-bottom: thin solid #ddd;
+  padding-bottom: 0.25em;
+  padding-top: 0.25em;
+  font-weight: 600; }
+
+.center {
+  text-align: center; }
+
+@keyframes pulse {
+  0% {
+    background-color: #555; }
+  100% {
+    background-color: #FFF; } }
+
+.over {
+  fill: red; }
+
+use.remove {
+  visibility: hidden; }
+
+svg g image + rect {
+  visibility: hidden; }
+
+svg > g[data-id] {
+  pointer-events: all; }
+  svg > g[data-id]:hover use {
+    visibility: visible;
+    cursor: pointer; }
+
+.modal {
+  z-index: 100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8); }
+  .modal .button-bar {
+    display: flex;
+    position: absolute;
+    width: 100vw;
+    top: 80%;
+    justify-content: center; }
+
+.frame {
+  pointer-events: none;
+  stroke: black;
+  stroke-width: 2px;
+  fill: none; }
+
+#images {
+  background-color: ivory;
+  flex: 0 0 60%;
+  overflow-y: auto; }
+  #images .toolbar {
+    z-index: 25;
+    border-bottom: thin solid #ddd;
+    background-color: rgba(255, 255, 241, 0.9); }
+    #images .toolbar .center {
+      font-weight: 600;
+      font-size: 1.25em; }
+
+#about {
+  text-align: center;
+  border-top: thin solid #ddd; }
+
+#gallery {
+  padding: 1em; }
+  #gallery:empty + #about {
+    margin-top: 3em; }
+  #gallery img {
+    margin: 0.3em;
+    transition: transform .1s ease-in-out;
+    padding: 0.5em 0.5em 2em 0.5em;
+    border: thin solid black;
+    background-color: white; }
+    #gallery img:not([src]) {
+      animation: pulse 1s infinite alternate; }
+    #gallery img:hover {
+      transform: scale(1.05); }
+
+button#installer {
+  background: url(../images/icon-180.4685c1b46790d3de3429.png) left no-repeat;
+  font-family: -apple-system, 'Helvetica Neue', 'Arial', 'Tahoma';
+  position: absolute;
+  background-color: navy;
+  top: 0;
+  right: 0;
+  margin: 1em;
+  border: thin solid white;
+  border-radius: 0.2em;
+  color: #fffff0;
+  font-size: 1.5em;
+  line-height: 1.5em;
+  height: 2em;
+  background-size: 2em 2em;
+  padding-left: 2.5em;
+  padding-right: 0.5em;
+  cursor: pointer; }

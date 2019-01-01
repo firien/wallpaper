@@ -13,7 +13,7 @@ const mode = () => {
 
 const app = new PWAPlugin({
   name: 'Wallpaper',
-  scope: 'Wallpaper',
+  scope: 'wallpaper',
   description: "iPhone wallpaper maker",
   theme: '#fffff0',
   tag: 2,

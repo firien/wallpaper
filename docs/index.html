@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Wallpaper</title>
+    <meta charset="UTF-8">
+    <meta name="Description" content="iPhone wallpaper maker">
+    <meta name="theme-color" content="#fffff0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- scripts-->
+    <script src="bundle.fa6b2ff660225ed38954.js" integrity="sha256-ik7fvs3cGgsTzDRzk7PRsQWvP0iHTbzBGvC8oquY+Lk="></script>
+    <script src="pwa.14204bfe81a0e47671e8.js" integrity="sha256-UKLHaW/l0F+t/Nc2e/qYY8SEHGRts9XdlXsancCfh9o="></script>
+    <script src="javascripts/index.361a87f057db138e1cdf.js" integrity="sha256-XJEY0Kzo/TGXF4YcKsJy6epMIYMy9Q7Df1pdsLK8uis="></script>
+    <!-- css-->
+    <link rel="stylesheet" href="stylesheets/index.17ab6e38c1a2be578904.css">
+    <!-- icons-->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/icon-152.2ddfea64487a68dc9247.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="images/icon-167.fcb0a0a29f380f1d9937.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.e19bd0c394cfa5bff277.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="images/icon-192.dff211fb3b1f56231b67.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="images/icon-512.e30b9f0096c2761c6181.png">
+    <!-- pwa-->
+    <link rel="manifest" href="manifest.webmanifest">
+  </head>
+  <body>
+    <div class="flex">
+      <div class="flex column page">
+        <div class="column" id="palette">
+          <div class="toolbar pin">
+            <select id="model">
+              <option value="se">iPhone SE</option>
+              <option value="eight">iPhone 6/7/8</option>
+              <option value="eightplus">iPhone 6/7/8 Plus</option>
+              <option value="xr">iPhone XR</option>
+              <option value="xs">iPhone Xs</option>
+              <option value="xsmax">iPhone Xs Max</option>
+            </select>
+            <div class="grow"></div>
+            <input id="background-color" type="color">
+          </div>
+          <div id="iphone"></div>
+        </div>
+        <div class="toolbar make">
+          <button id="make-wallpaper">Make Wallpaper</button>
+        </div>
+      </div>
+      <div class="page" id="images">
+        <div class="toolbar pin">
+          <div class="center">Drag & Drop Photos here</div>
+          <div class="grow"></div>
+          <button id="delete-photos">Delete</button>
+        </div>
+        <div id="gallery"></div>
+        <div id="about"><p>This is a <a href="https://developer.mozilla.org/en-US/docs/Web/Apps/Progressive">PWA</a>. It can be used offline, it does not communicate with any servers. All images and photos stay on your machine, everything is done in your browser. Source code is available on <a href="https://github.com/firien/wallpaper">GitHub</a>.</p>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

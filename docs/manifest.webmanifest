@@ -1,0 +1,35 @@
+{
+    "name": "Wallpaper",
+    "short_name": "Wallpaper",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#fffff0",
+    "description": "iPhone wallpaper maker",
+    "icons": [
+        {
+            "src": "images/icon-152.2ddfea64487a68dc9247.png",
+            "type": "image/png",
+            "sizes": "152x152"
+        },
+        {
+            "src": "images/icon-167.fcb0a0a29f380f1d9937.png",
+            "type": "image/png",
+            "sizes": "167x167"
+        },
+        {
+            "src": "images/icon-180.e19bd0c394cfa5bff277.png",
+            "type": "image/png",
+            "sizes": "180x180"
+        },
+        {
+            "src": "images/icon-192.dff211fb3b1f56231b67.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "images/icon-512.e30b9f0096c2761c6181.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
