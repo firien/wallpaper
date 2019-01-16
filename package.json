@@ -12,11 +12,11 @@
     "clean-webpack-plugin": "^1.0.0",
     "gh-pwa": "github:firien/gh-pwa#worker",
     "jstransformer-markdown-it": "^2.1.0",
-    "nanoid": "^2.0.0",
-    "webpack": "^4.27.1",
-    "webpack-dev-server": "^3.1.10"
+    "nanoid": "^2.0.1",
+    "webpack": "^4.28.4",
+    "webpack-dev-server": "^3.1.14"
   },
   "devDependencies": {
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.2.1"
   }
 }
