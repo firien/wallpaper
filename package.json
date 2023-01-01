@@ -13,10 +13,10 @@
     "gh-pwa": "github:firien/gh-pwa#worker",
     "jstransformer-markdown-it": "^2.1.0",
     "nanoid": "^2.0.1",
-    "webpack": "^4.28.4",
+    "webpack": "^5.75.0",
     "webpack-dev-server": "^3.1.14"
   },
   "devDependencies": {
-    "webpack-cli": "^3.2.1"
+    "webpack-cli": "^5.0.1"
   }
 }
